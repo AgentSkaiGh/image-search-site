@@ -1,114 +1,58 @@
-const apikey='987bfff172be4b6e985d793e1c5be46c';
+const accessKey = 'DRoVHp26mZTqk0ixCeJAKW2wzl9TVbBj-2Qmpc9Jnao';
+const formEl = document.querySelector("form");
+const inputEl = document.getElementById("search-input");
+const searchResults = document.getElementById("search-results");
+const showMore = document.getElementById("show-more-button");
 
-const blogContainer = document.getElementById
-("blog-container");
+let inputData = "";
+let page = 1;
 
-const searchField=document.getElementById("search-input");
-const searchButton=document.getElementById("search-button");
+async function searchImages() {
+    inputData = inputEl.value;
+    const url = `https://api.unsplash.com/search/photos?page=${page}&query=${inputData}&client_id=${accessKey}`;
 
-async function fetchRandomNews(){
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const results = data.results;
 
+        if (page === 1) {
+            searchResults.innerHTML = ""; // Clear previous results only if it's a new search
+        }
 
+        results.map((result) => {
+            const imageWrapper = document.createElement("div");
+            imageWrapper.classList.add("search-result");
 
-try{ 
+            const image = document.createElement("img");
+            image.src = result.urls.small;
+            image.alt = result.alt_description; // Use result.alt_description
 
-    const  apiUrl=`https://newsapi.org/v2/top-headlines?country=us&pageSize=10&apikey=${apikey}`;
-    const response = await fetch(apiUrl);
+            const imageLink = document.createElement("a");
+            imageLink.href = result.links.html; // Use result.links.html
+            imageLink.target = "_blank";
+            imageLink.textContent = result.alt_description;
 
-    const data= await response.json();
+            imageLink.appendChild(image);
+            imageWrapper.appendChild(imageLink);
+            searchResults.appendChild(imageWrapper);
+        });
 
-    return data.articles;
-}
-     catch(error) {console.error("Error fetching random news",error);
-
-    return[];
-}      
-}
-
-searchButton.addEventListener("click",async () =>{
-     const query =searchField.value.trim();
-if(query !==""){
-
-    try{
-         const articles =await fetchNewsQuery(query);
-         displayBlogs(articles);
-    }catch(error){
-
-        console.log("Error fetching news by query",error);
+        page++;
+        if (page > 1) {
+            showMore.style.display = "block"; // Show 'Show more' button after the first page
+        }
+    } catch (error) {
+        console.error("Error fetching images:", error);
     }
 }
+
+formEl.addEventListener("submit", (event) => {
+    event.preventDefault();
+    page = 1; // Reset to page 1 for new search
+    searchImages();
 });
 
-
-
-
-
-
-async function fetchNewsQuery(query){  
-
-    try{
-    const  apiUrl=`https://newsapi.org/v2/everything?q=${query }&pageSize=10&apikey=${apikey}`;
-const response = await fetch(apiUrl);
-
-const data= await response.json();
-
-return data.articles;
-}
- catch(error) {console.error("Error fetching random news",error);
-
-return[];
-     
-}
-}
-
-function displayBlogs(articles){
-
-blogContainer.innerHTML="";
-articles.forEach((article)=>{
-    const blogCard = document.createElement ("div");
-    blogCard.classList.add("blog-card");
-    const img = document.createElement("img");
-    img.src=article.urlToImage;
-    img.alt=article.title;
-    const title =document.createElement("h2");
-    const truncatedTitle = article.title.length > 30?
-    article.title.slice(0,30)+ "...."
-    :article.title;
-    title.textContent=truncatedTitle;
-    const description =document.createElement("p");
-    const truncatedDes=article.description.length > 120?
-    article.description.slice(0,120)+ "...."
-    :article.description;
-    description.textContent=truncatedDes ;
-
-
-
-blogCard.appendChild(img);
-
-blogCard.appendChild(title);
- 
-blogCard.appendChild(description);
-
-blogCard.addEventListener('click',()=>{window.open(article.url,"_blank");
-
+showMore.addEventListener("click", () => {
+    searchImages(); // Load more images
 });
-blogContainer.appendChild(blogCard);
-
-
-});
-
-}
-
-
-
-(async()=>{
-    try{
-    const articles= await fetchRandomNews();
-displayBlogs(articles);
-}
-
-catch (error){ console.error("Error fetching random news",error);
-
-}
-
-})();
